@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sample Ink</title>
+
+        <!-- size and position elements on the page with CSS in this style tag. -->
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+            canvas {
+                border: 10px solid black;
+
+                width: calc(100vw - 20px);
+                height: calc(100vh - 20px);
+
+                /* make sure we don't start a manipulation, we want to handle the events directly*/
+                touch-action: none;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas></canvas>
+
+        <!-- put code to intialize the page and handle events in this script tag. -->
+        <script type="module">
+            // get a reference to the canvas element
+            let canvas = document.querySelector("canvas")
+
+            // create a 2D drawing context for the canvas
+            let ctx = canvas.getContext("2d")
+
+            // record the ratio between physical and CSS (logical) pixels
+            let scale = window.devicePixelRatio
+
+            // initialize the width and height properties of the canvas
+            // that we'll use for drawing
+            let style = getComputedStyle(canvas)
+
+            let width = parseInt(style.width)
+            let height = parseInt(style.height)
+
+            // Multiply by devicePixelRatio to use a resolution that will match 
+            // physical pixels
+            canvas.width =  width * scale
+            canvas.height = height * scale
+
+            // scale the context so it will operate in CSS pixels which will match
+            // the coordinates received from pointer events
+            ctx.scale(scale, scale)
+
+            // define a style that we can use to draw text
+            ctx.fillStyle = "rgb(0, 0, 0)"
+            ctx.font = "bold 64px serif"
+
+            // measure text to see where it should be drawn if we want it centered
+            let text = ctx.measureText("Ready!")
+
+            // draw the text
+            ctx.fillText(
+                "Ready!",
+                /*x*/(width - text.width) / 2,
+                /*y*/height / 2
+            )
+
+            // Listen to pointer events and draw them with green dots
+            canvas.addEventListener("pointermove", handlePointerMove)
+
+            // track the first event so we can do a one time clear of the canvas
+            let firstEvent = true
+
+            // map pointerIds to colors in a persistent way
+            let pointerColorMap = {}
+
+            function handlePointerMove(e) {
+                if (firstEvent) {
+                    ctx.clearRect(/*x*/0, /*y*/0, width, height)
+                    firstEvent = false
+                }
+
+                let color = pointerColorMap[e.pointerId]
+                if (!color) {
+                    color = randomColor()
+                    pointerColorMap[e.pointerId] = color
+                }
+
+                ctx.fillStyle = color
+                ctx.beginPath()
+                ctx.arc(
+                    e.clientX - 10, 
+                    e.clientY - 10, 
+                    /*radius*/10,
+                    /*startAngleRadians*/0, 
+                    /*endAngleRadians*/2 * Math.PI
+                )
+                ctx.fill()
+            }
+
+            function randomColor() {
+                let red = Math.floor(Math.random() * 256)
+                let green = Math.floor(Math.random() * 256)
+                let blue = Math.floor(Math.random() * 256)
+
+                return `rgb(${red},${green},${blue})`
+            }
+        </script>
+    </body>
+</html>
